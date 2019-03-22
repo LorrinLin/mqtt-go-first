@@ -20,8 +20,8 @@ func main(){
 	if topic == "" {
 		topic = "test"
 	}
-//	wg.Add(1)
-	
+
+	wg.Add(1)
 	listen(uri,topic)
 	
 	client := connect("pub",uri)
@@ -44,13 +44,14 @@ func main(){
 }
 
 func listen(uri string, topic string){
-	wg.Add(1)
+	
 	fmt.Println("in listen...")
 	client := connect("sub",uri)
 	client.Subscribe(topic, 0, func (client mqtt.Client, msg mqtt.Message){
 		fmt.Printf("* [%s] %s\n", msg.Topic(), string(msg.Payload()))
+		wg.Done()
 	})
-	wg.Done()
+	
 }
 
 func connect(clientId string, uri string) mqtt.Client{
