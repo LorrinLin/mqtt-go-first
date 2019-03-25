@@ -13,7 +13,8 @@ var (
 
 func main(){
 	opts := mqtt.NewClientOptions()
-	opts.AddBroker("iot.eclipse.org:1883")
+	opts.AddBroker("test.mosquitto.org:1883")
+	
 	
 	go process(opts)
 	
@@ -33,9 +34,9 @@ func process(opts *mqtt.ClientOptions){
 		fmt.Println("token err:",token.Error())
 	}
 	
-	consumer.Subscribe("my/test", 0, func(client mqtt.Client, msg mqtt.Message){
+	consumer.Subscribe("linyujia/testtopic", 0, func(client mqtt.Client, msg mqtt.Message){
 		fmt.Printf("* [%s] %s\n", msg.Topic(), string(msg.Payload()))
-		wg.Done()
+		
 	})
 	fmt.Println("consumer is here..")
 	fmt.Println("waiting for your message..")

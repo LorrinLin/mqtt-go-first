@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"strings"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
@@ -14,42 +15,49 @@ var(
 )
 
 func main(){
-	uri := "iot.eclipse.org:1883"
+	uri := "test.mosquitto.org:1883"
 	
 	topic := ""
 	if topic == "" {
-		topic = "test"
+		topic = "linyujia/test"
 	}
 
+	fmt.Println("Please input what you want to send,input 'exit' to exit..")
+	
+	publisher := connect("pub", uri)
+	go listen(uri,topic)
 	wg.Add(1)
-	listen(uri,topic)
-	
-	client := connect("pub",uri)
-	
-	fmt.Println("Please input what you want to send..")
-	msg,err := bufio.NewReader(os.Stdin).ReadString('\n')
-	
-//	timer := time.NewTicker(1 * time.Second)
-//	for t := range timer.C {
-//		client.Publish(topic, 0, false, "Eric: "+t.String())
-//	}
+		
+	for{
+		msg,err := bufio.NewReader(os.Stdin).ReadString('\n')
+		msg = strings.Trim(msg, "\r\n")
+		if msg == "exit"{
+			fmt.Println("you are exited..")
+			break
+		}
 
-	if err!=nil{
-		fmt.Println("err in read..",err)
+		if err!=nil{
+			fmt.Println("err in read..",err)
+		
+		}
+		
+		token := publisher.Publish(topic, 0, false, msg)
+		if token.Error() != nil{
+			fmt.Println("err in publish - ",token.Error())
+			break
+		}
+
 	}
-	fmt.Println("you input:",msg)
-	client.Publish(topic, 0, false, msg)
-	
-	wg.Wait()
+	fmt.Println("----------byebye---------")
 }
 
 func listen(uri string, topic string){
 	
 	fmt.Println("in listen...")
-	client := connect("sub",uri)
-	client.Subscribe(topic, 0, func (client mqtt.Client, msg mqtt.Message){
+	consumer := connect("sub",uri)
+	consumer.Subscribe(topic, 0, func (client mqtt.Client, msg mqtt.Message){
 		fmt.Printf("* [%s] %s\n", msg.Topic(), string(msg.Payload()))
-		wg.Done()
+
 	})
 	
 }
@@ -60,7 +68,7 @@ func connect(clientId string, uri string) mqtt.Client{
 	client := mqtt.NewClient(opt)
 	token := client.Connect()
 	
-	for !token.WaitTimeout(3 * time.Second){
+	for !token.WaitTimeout(1 * time.Second){
 		
 	}
 	if err := token.Error(); err != nil{
